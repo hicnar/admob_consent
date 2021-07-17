@@ -126,13 +126,15 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
       new ConsentInformation.OnConsentInfoUpdateSuccessListener() {
         @Override
         public void onConsentInfoUpdateSuccess() {
-            methodChannel.invokeMethod("onConsentFormLoaded", null);
-            // The consent information state was updated.
-            // You are now ready to check if a form is available.
-            if (consentInformation.isConsentFormAvailable()) {
-              methodChannel.invokeMethod("onConsentFormAvailable", null);
-              // Load form
-              loadForm(forceShow);
+            if (methodChannel != null) {
+              methodChannel.invokeMethod("onConsentFormLoaded", null);
+              // The consent information state was updated.
+              // You are now ready to check if a form is available.
+              if (consentInformation.isConsentFormAvailable()) {
+                methodChannel.invokeMethod("onConsentFormAvailable", null);
+                // Load form
+                loadForm(forceShow);
+              }
             }
         }
       },
@@ -141,7 +143,9 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
         public void onConsentInfoUpdateFailure(FormError formError) {
           Map<String, Object> args = new HashMap<>();
           args.put("message", formError.getMessage());
-          methodChannel.invokeMethod("onConsentFormError", args);
+          if (methodChannel != null) {
+            methodChannel.invokeMethod("onConsentFormError", args);
+          }
         }
       }
     );
@@ -156,7 +160,9 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
         public void onConsentFormLoadSuccess(ConsentForm consentForm) {
           // Form load success
           consentForm = consentForm;
-          methodChannel.invokeMethod("onConsentFormOpened", null);
+          if (methodChannel != null) {
+            methodChannel.invokeMethod("onConsentFormOpened", null);
+          }
 
           if (consentInformation.getConsentStatus() == ConsentInformation.ConsentStatus.REQUIRED) {
             // Consent required, first time opening form
@@ -166,7 +172,9 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
                   @Override
                   public void onConsentFormDismissed(FormError formError) {
                     // Obtained consent from form
-                    methodChannel.invokeMethod("onConsentFormObtained", null);
+                    if (methodChannel != null) {
+                      methodChannel.invokeMethod("onConsentFormObtained", null);
+                    }
                   }
               }
             );
@@ -177,7 +185,9 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
               new ConsentForm.OnConsentFormDismissedListener() {
                   @Override
                   public void onConsentFormDismissed(FormError formError) {
-                    methodChannel.invokeMethod("onConsentFormObtained", null);
+                    if (methodChannel != null) {
+                      methodChannel.invokeMethod("onConsentFormObtained", null);
+                    }
                   }
               }
             );
@@ -187,9 +197,11 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
       new UserMessagingPlatform.OnConsentFormLoadFailureListener() {
         @Override
         public void onConsentFormLoadFailure(FormError formError) {
-          Map<String, Object> args = new HashMap<>();
-          args.put("message", formError.getMessage());
-          methodChannel.invokeMethod("onConsentFormError", args);
+          if (methodChannel != null) {
+            Map<String, Object> args = new HashMap<>();
+            args.put("message", formError.getMessage());
+            methodChannel.invokeMethod("onConsentFormError", args);
+          }
         }
       }
     );
