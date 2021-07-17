@@ -87,6 +87,7 @@ class AdmobConsent {
     _onConsentFormOpened.close();
     _onConsentFormObtained.close();
     _onConsentFormError.close();
+    _onConsentFormAvailable.close();
     _instance = null;
   }
 }
