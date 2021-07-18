@@ -25,13 +25,10 @@ import com.google.android.ump.ConsentRequestParameters;
 import com.google.android.ump.FormError;
 import com.google.android.ump.UserMessagingPlatform;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
-import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
 
@@ -49,7 +46,6 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
   private Activity activity;
 
   private ConsentInformation consentInformation;
-  private ConsentForm consentForm;
 
   /** Plugin registration. */
   public static void registerWith(PluginRegistry.Registrar registrar) {
@@ -113,6 +109,7 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
   }
 
   private void showConsent(MethodCall call) {
+
     if (activity == null) return; // No activity
 
     // Determines if form should be shown despite consent already being obtained
@@ -120,22 +117,21 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
 
     ConsentRequestParameters params = new ConsentRequestParameters.Builder().build();
     consentInformation = UserMessagingPlatform.getConsentInformation(activity);
-    consentInformation.requestConsentInfoUpdate(
-      activity,
-      params,
+
+    consentInformation.requestConsentInfoUpdate(activity, params,
       new ConsentInformation.OnConsentInfoUpdateSuccessListener() {
         @Override
         public void onConsentInfoUpdateSuccess() {
-            if (methodChannel != null) {
-              methodChannel.invokeMethod("onConsentFormLoaded", null);
-              // The consent information state was updated.
-              // You are now ready to check if a form is available.
-              if (consentInformation.isConsentFormAvailable()) {
-                methodChannel.invokeMethod("onConsentFormAvailable", null);
-                // Load form
-                loadForm(forceShow);
-              }
+          if (methodChannel != null) {
+            methodChannel.invokeMethod("onConsentFormLoaded", null);
+            // The consent information state was updated.
+            // You are now ready to check if a form is available.
+            if (consentInformation.isConsentFormAvailable()) {
+              methodChannel.invokeMethod("onConsentFormAvailable", null);
+              // Load form
+              loadForm(forceShow);
             }
+          }
         }
       },
       new ConsentInformation.OnConsentInfoUpdateFailureListener() {
@@ -151,44 +147,28 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
     );
   }
 
-  private void loadForm(boolean forceShow) {
-    final boolean finalForceShow = forceShow;
-    UserMessagingPlatform.loadConsentForm(
-      activity,
+  private void loadForm(final boolean forceShow) {
+    UserMessagingPlatform.loadConsentForm(activity,
       new UserMessagingPlatform.OnConsentFormLoadSuccessListener() {
         @Override
         public void onConsentFormLoadSuccess(ConsentForm consentForm) {
-          // Form load success
-          consentForm = consentForm;
+
           if (methodChannel != null) {
             methodChannel.invokeMethod("onConsentFormOpened", null);
           }
 
-          if (consentInformation.getConsentStatus() == ConsentInformation.ConsentStatus.REQUIRED) {
+          if (consentInformation.getConsentStatus() == ConsentInformation.ConsentStatus.REQUIRED || forceShow) {
             // Consent required, first time opening form
             consentForm.show(
               activity,
               new ConsentForm.OnConsentFormDismissedListener() {
-                  @Override
-                  public void onConsentFormDismissed(FormError formError) {
-                    // Obtained consent from form
-                    if (methodChannel != null) {
-                      methodChannel.invokeMethod("onConsentFormObtained", null);
-                    }
+                @Override
+                public void onConsentFormDismissed(FormError formError) {
+                  // Obtained consent from form
+                  if (methodChannel != null) {
+                    methodChannel.invokeMethod("onConsentFormObtained", null);
                   }
-              }
-            );
-          } else if (finalForceShow) {
-            // Already obtained previously, display form to let user manage/change consent
-            consentForm.show(
-              activity,
-              new ConsentForm.OnConsentFormDismissedListener() {
-                  @Override
-                  public void onConsentFormDismissed(FormError formError) {
-                    if (methodChannel != null) {
-                      methodChannel.invokeMethod("onConsentFormObtained", null);
-                    }
-                  }
+                }
               }
             );
           }
