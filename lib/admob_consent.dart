@@ -15,6 +15,7 @@
  */
 import 'dart:async';
 
+import 'package:admob_consent/gdpr_consent_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
