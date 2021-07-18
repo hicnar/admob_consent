@@ -103,6 +103,23 @@ public class AdmobConsentPlugin implements FlutterPlugin, MethodCallHandler, Act
     if (call.method.equals("show")) {
       showConsent(call);
       result.success(null);
+    } else if (call.method.equals("getGdprConsentStatus")) {
+      String status = "unknown";
+      if (activity != null) {
+        consentInformation = UserMessagingPlatform.getConsentInformation(activity);
+        switch (consentInformation.getConsentStatus()) {
+          case ConsentInformation.ConsentStatus.NOT_REQUIRED:
+              status = "not_required";
+              break;
+          case ConsentInformation.ConsentStatus.OBTAINED:
+              status = "obtained";
+              break;
+          case ConsentInformation.ConsentStatus.REQUIRED:
+              status = "required";
+          default:
+        }
+      }
+      result.success(status);
     } else {
       result.notImplemented();
     }

@@ -67,6 +67,16 @@ class AdmobConsent {
   Future<Null> show({bool forceShow = false}) async =>
       await _channel.invokeMethod('show', {'forceShow': forceShow});
 
+  Future<GdprConsentStatus> getGdprConsentStatus() async {
+    var result = GdprConsentStatus.unknown;
+    if (_isAndroid) {
+      result = GdprConsentStatus.fromName(
+        await _channel.invokeMethod('getGdprConsentStatus'), orElse: result
+      );
+    }
+    return result;
+  }
+  
   /// Triggered when the form has been loaded
   Stream<Null> get onConsentFormLoaded => _onConsentFormLoaded.stream;
 
@@ -90,4 +100,7 @@ class AdmobConsent {
     _onConsentFormAvailable.close();
     _instance = null;
   }
+
+  bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
+
 }
